@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <IncludePath>C:\dev\librealsense\include;C:\dev\opencv\build\install\include;C:\dev\librealsense\third-party\glfw\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\dev\opencv\build\install\x64\vc15\lib;C:\dev\opencv\build\install\x64\vc15\bin;C:\Program Files\librealsense2\bin;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\dev\librealsense\third-party\glfw\include;C:\dev\librealsense\third-party\imgui;C:\dev\librealsense\examples;C:\Program Files\librealsense2\include;C:\dev\opencv\build\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\dev\opencv\build\install\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
