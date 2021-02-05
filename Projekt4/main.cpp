@@ -10,30 +10,33 @@ void main() {
 	//cuda::setDevice(0);
 	Stitching st;
 
-
+	////
 	thread t1(&Stitching::getFrameTCP, &st,54000,0, "Bild 1");
-	thread t11(&Stitching::getFrameTCP, &st, 58000, 0, "Bild 2");
+	//////thread t11(&Stitching::getFrameTCP, &st, 58000, 0, "Bild 2");
 
 	thread t2(&Stitching::getKeyPointsTCP, &st,53000);
-	thread t22(&Stitching::getKeyPointsTCP, &st, 59000);
+	////thread t22(&Stitching::getKeyPointsTCP, &st, 59000);
 
+	//thread t3(&Stitching::getCudaDescriptorsTCP, &st, 52000);
 	thread t3(&Stitching::getDescriptorTCP, &st, 52000);
-	thread t33(&Stitching::getDescriptorTCP, &st,60000);
+	//thread t33(&Stitching::getDescriptorTCP, &st,60000);
 
-	thread t4(&Stitching::getDimensions, &st, 51000);
-	thread t44(&Stitching::getDimensions, &st,61000);
+	//thread t4(&Stitching::getCUDADimensions, &st, 51000);
+	//thread t4(&Stitching::getDimensions, &st, 51000);
+	//thread t44(&Stitching::getDimensions, &st,61000);
 
-	thread t5(&Stitching::realTimeStitching, &st);
+	//thread t5(&Stitching::realTimeStitching, &st);
 
 	t1.join();
-	t11.join();
+	//t11.join();
 	t2.join();
-	t22.join();
+	//t22.join();
 	t3.join();
-	t44.join();
-	t4.join();
-	t5.join();
-	////st.imgRight = imread("C:\\Users\\fmosh\\OneDrive\\Dokumente\\WiSe_2021\\Masterarbeit\\AutomatisierteAufnahmen\\RightUp.png", IMREAD_COLOR);
+	////t44.join();
+	//t4.join();
+	//t5.join();
+
+	//st.imgRight = imread("C:\\Users\\fmosh\\OneDrive\\Dokumente\\WiSe_2021\\Masterarbeit\\AutomatisierteAufnahmen\\RightUp.png", IMREAD_COLOR);
 	//st.imgCenter = imread("C:\\Users\\fmosh\\OneDrive\\Dokumente\\WiSe_2021\\Masterarbeit\\AutomatisierteAufnahmen\\centerUp.png", IMREAD_COLOR);
 	//st.imgBottom2 = imread("C:\\Users\\fmosh\\OneDrive\\Dokumente\\WiSe_2021\\Masterarbeit\\AutomatisierteAufnahmen\\BottomLeftUp.png", IMREAD_COLOR);
 	//st.imgBottom1 = imread("C:\\Users\\fmosh\\OneDrive\\Dokumente\\WiSe_2021\\Masterarbeit\\AutomatisierteAufnahmen\\BottomRightUp.png", IMREAD_COLOR);
@@ -44,10 +47,10 @@ void main() {
 	//st.imgBottom1 = imread("C:\\Users\\fmosh\\OneDrive\\Dokumente\\WiSe_2021\\Masterarbeit\\Aufnahmen_11012021\\fork_BottomLeft1_alternative_Color.png", IMREAD_COLOR);
 	//std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	////////////SURF####################################
-	//double ratio = 0.6;
+	double ratio = 0.6;
 
 	//vector < DMatch > matchesCL = st.getSurfMatches(st.imgCenter, st.imgLeft, ratio);
-	////vector < DMatch > matchesCR = st.getSurfMatches(st.imgCenter, st.imgRight, ratio);
+	//vector < DMatch > matchesCR = st.getSurfMatches(st.imgCenter, st.imgRight, ratio);
 	////vector < DMatch > matchesCB1 = st.getSurfMatches(st.imgCenter, st.imgBottom1, ratio);
 	////vector < DMatch > matchesCB2 = st.getSurfMatches(st.imgCenter, st.imgBottom2, ratio);
 
@@ -57,6 +60,8 @@ void main() {
 	//vector < DMatch > matchesCR = st.getSiftmatches(st.imgCenter, st.imgRight, ratio);
 	//vector < DMatch > matchesCB1 = st.getSiftmatches(st.imgCenter, st.imgBottom1, ratio);
 	//vector < DMatch > matchesCB2 = st.getSiftmatches(st.imgCenter, st.imgBottom2, ratio);
+
+		//vector < DMatch > matchesCR = st.getSureMatches(st.imgCenter, st.imgRight, ratio);
 
 
 	////vector < DMatch > matchesCL = st.getSiftmatchesFlann(st.imgCenter, st.imgLeft, ratio);

@@ -7,12 +7,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stitching", "Projekt4\Proje
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		BasicCfg|x64 = BasicCfg|x64
+		BasicCfg|x86 = BasicCfg|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F839342F-06FA-4B03-A57B-B247D8D6D510}.BasicCfg|x64.ActiveCfg = Debug|x64
+		{F839342F-06FA-4B03-A57B-B247D8D6D510}.BasicCfg|x64.Build.0 = Debug|x64
+		{F839342F-06FA-4B03-A57B-B247D8D6D510}.BasicCfg|x86.ActiveCfg = BasicCfg|Win32
+		{F839342F-06FA-4B03-A57B-B247D8D6D510}.BasicCfg|x86.Build.0 = BasicCfg|Win32
 		{F839342F-06FA-4B03-A57B-B247D8D6D510}.Debug|x64.ActiveCfg = Debug|x64
 		{F839342F-06FA-4B03-A57B-B247D8D6D510}.Debug|x64.Build.0 = Debug|x64
 		{F839342F-06FA-4B03-A57B-B247D8D6D510}.Debug|x86.ActiveCfg = Debug|x64

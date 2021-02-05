@@ -3,7 +3,7 @@ std::mutex mu;
 std::mutex mu2;
 std::mutex mu3;
 std::mutex mu4;
-
+#include <fstream>
 //
 //Stitching::Stitching(String adress1, String adress2, String adress3 = 0, String adress4 = 0) {
 //	//Mat imgLeft = imread(adress1, IMREAD_COLOR);
@@ -142,34 +142,66 @@ SOCKET createSocket(int port) {
 }
 
 void Stitching::getDimensions(int port) {
-	std::this_thread::sleep_for(3s);
+	std::this_thread::sleep_for(0.1s);
 	SOCKET clientSocket = createSocket(port);
-	char buf[8];
+	char buf[sizeof(uint)];
 	int bytes = 0;
 	int buffer;
 	while (true)
 	{
+		ZeroMemory(buf, 8);
+		//for (int i = 0; i < 8; i += bytes)
+		if ((bytes = recv(clientSocket, buf, 8, 0)) == -1) cout << ("recv failed")<<endl;
+		this->kpLength = (uint)buf;
+		cout << "KP SIZE: " << this->kpLength << endl;
+		//Wait for client to send data
+		//for (int i = 0; i < 4; i += bytes)
+		//if ((bytes = recv(clientSocket, (char*)&buffer, 4+i, 0)) == -1) cout << ("recv failed")<<endl;
+		//if (port == 51000) {
+		//	this->rowdscCenter = buffer;
+		//}
+		//else if (port == 61000) {
+		//	this->rowdscLeft = buffer;
+		//}
+
+		//for (int i = 0; i < 4; i += bytes)
+		//if ((bytes = recv(clientSocket, (char*)&buffer, 4, 0)) == -1) cout << ("recv failed")<<endl;
+		//if (port == 51000) {
+		//	this->coldscCenter = buffer;
+		//}
+		//else if (port == 61000) {
+		//	this->coldscLeft = buffer;
+		//}
+
+	}
+	closesocket(clientSocket);
+
+	WSACleanup();
+}
+
+
+void Stitching::getCUDADimensions(int port) {
+	std::this_thread::sleep_for(0.1s);
+	SOCKET clientSocket = createSocket(port);
+	char buf[16];
+	int bytes = 0;
+	int buffer;
+	int bufKP;
+	while (true)
+	{
 		ZeroMemory((char*)&buffer, 4);
+		ZeroMemory((char*)&bufKP, 4);
 
 		//Wait for client to send data
 		for (int i = 0; i < 4; i += bytes)
-		if ((bytes = recv(clientSocket, (char*)&buffer, 4+i, 0)) == -1) cout << ("recv failed");
-		if (port == 51000) {
-			this->rowdscCenter = buffer;
-		}
-		else if (port == 61000) {
-			this->rowdscLeft = buffer;
-		}
+			if ((bytes = recv(clientSocket, (char*)&bufKP + i, 4 - i, 0)) == -1) cout << ("recv failed");
+		mu.lock();
+		this->kpLength = bufKP;
+		mu.unlock();
 
 		for (int i = 0; i < 4; i += bytes)
-		if ((bytes = recv(clientSocket, (char*)&buffer, 4, 0)) == -1) cout << ("recv failed");
-		if (port == 51000) {
-			this->coldscCenter = buffer;
-		}
-		else if (port == 61000) {
-			this->coldscLeft = buffer;
-		}
-
+			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv failed");
+		this->dscSize = buffer;
 	}
 	closesocket(clientSocket);
 
@@ -181,75 +213,125 @@ void Stitching::getDescriptorTCP(int port)
 	std::this_thread::sleep_for(2s);
 	SOCKET clientSocket = createSocket(port);
 	//SOCKET clientSocket = this->serv.createUDPSocket(52000);
+
+	int bytes = 0;
+	sockaddr_in client;
+	int clientLength = sizeof(client);
+	ZeroMemory(&client, clientLength);
+	int buffsize = 1024 * 1024 ;
+	setsockopt(clientSocket, SOL_SOCKET, SO_RCVBUF, (char*)&buffsize, sizeof(buffsize));
+	//float buf[30720];
+	//float buf[90720];
+	float buf[1024 * 1024 ];
+	char buffer[1024 * 1024];
+	int dscSize;
+	while (true)
+	{
+		vector<float> descriptors;
+		ZeroMemory(buffer, sizeof(buffer));
+		//Wait for client to send data
+
+		//for (int i = 0; i < imgSize; i += bytes)
+		if ((bytes = recv(clientSocket, buffer, sizeof(buffer), 0)) == -1) cout << ("recv failed");
+		float *p;
+
+		for (p = (float*)&buffer[0]; p <= (float*)&buffer[bytes-1]; p++) {
+			descriptors.push_back(*p);
+			//*p++;
+
+		}
+		*p = NULL;
+
+		if (bytes == SOCKET_ERROR) {
+			cout << "Error receiving from client" << WSAGetLastError() << endl;
+			continue;
+		}
+
+		
+		if (port == 60000)
+		{
+
+		}
+		else if (port == 52000) {
+
+		}
+
+
+
+		if (bytes == SOCKET_ERROR)
+		{
+			cerr << "Error in recv().Quitting" << endl;
+			break;
+		}
+
+		if (bytes == 0)
+		{
+			cout << "Client disconnected" << endl;
+			break;
+		}
+
+
+
+
+	}
+	closesocket(clientSocket);
+
+	WSACleanup();
+}
+void Stitching::getCudaDescriptorsTCP(int port)
+{
+	//std::this_thread::sleep_for(2s);
+
+	SOCKET clientSocket = createSocket(port);
 	int rows=400, cols=64;
 	if (port == 52000) {
-		rows = this->rowdscCenter;
-		cols = this->coldscCenter;
+
 	}
 	else if (port == 6000) {
-		rows = this->rowdscLeft;
-		cols = this->coldscLeft;
+
 	}
 
 	int bytes = 0;
 	sockaddr_in client;
 	int clientLength = sizeof(client);
 	ZeroMemory(&client, clientLength);
-	int buffsize = 1024 * 1024*2;
+	int buffsize = 1024 * 1024;
 	setsockopt(clientSocket, SOL_SOCKET, SO_RCVBUF, (char*)&buffsize, sizeof(buffsize));
 	//float buf[30720];
 	//float buf[90720];
-	float buf[1024 * 1024*2];
-
+	float buf[1024 * 1024];
+	//char buf[1024 * 1024];
+	vector<float> descriptors;
+	int size;
 	while (true)
 	{
-		Mat img = Mat::zeros(rows, cols, CV_32F);
+		bytes = 0;
+		size = this->dscSize;
+		descriptors.clear();
+		ZeroMemory((char*)&buf, size);
 
-		int imgSize;
-		imgSize = img.total()*img.elemSize();
-		
-		ZeroMemory((char*)&buf, imgSize);
-		//Wait for client to send data
-
-		//for (int i = 0; i < imgSize; i += bytes)
-			if ((bytes = recv(clientSocket, (char*)&buf, imgSize , 0)) == -1) cout << ("recv failed");
+		for (int i = 0; i < size; i += bytes)
+			if ((bytes = recv(clientSocket, (char*)&buf+i, size -i, 0)) == -1) cout << ("recv failed dsc");
 			
-		// bytes = recvfrom(clientSocket, (char*)&buf, imgSize, 0, (sockaddr*)&client, &clientLength);
-		//buf[bytes] = '\0';
+		//cout << "DSC: " << *buf << endl;
+		int ptr = 0;
+		float *p = buf;
+		mu4.lock();
+			for (int i = 0; i < size; i++) {
 
-		if (bytes == SOCKET_ERROR) {
+				descriptors.push_back(*p++);
+		}
+			mu4.unlock();
+		
+			if (bytes == SOCKET_ERROR) {
 			cout << "Error receiving from client" << WSAGetLastError() << endl;
 			continue;
 		}
-	
 
-
-		int ptr = 0;
-		for (int i = 0; i < img.rows; i++) {
-			for (int j = 0; j < img.cols; j++) {
-				img.at<float>(i, j) = buf[ptr];
-				ptr = ptr + 1;
-
-			}
-		}
 		if(port==60000)
 		{
-			this->dscLeft = img.clone();	
-			//namedWindow("Deskriptor links", WINDOW_FREERATIO);
-			//cv::imshow("Deskriptor links", this->dscLeft);
-			//if (waitKey(1000 / 20) >= 0) {
-			//	break;
-			//}
 		}
 		else if (port == 52000) {
-			this->dscCenter = img.clone();
-			//cout << dscCenter.at<float>(5, 5) << endl;
-			//namedWindow("Deskriptor mitte", WINDOW_FREERATIO);
-			//cv::imshow("Deskriptor mitte", this->dscCenter);
-
-			//if (waitKey(1000 / 20) >= 0) {
-			//	break;
-			//}
 		}
 
 
@@ -281,45 +363,83 @@ void Stitching::getKeyPointsTCP(int port) {
 	SOCKET clientSocket = createSocket(port);
 	int bytes = 0;
 	vector<KeyPoint> veckp;
-
 	KeyPoint kp;
-	char buf[4];
+	
+	char buf[1024*1024];
+	//KeyPoint buffer[3000];
 	float buffer;
-	Ptr<SURF> detector = SURF::create(400);
-
+	KeyPoint *p;
+	Mat imgK;
+	int len = 800000;
 	while (true)
 	{	
-		veckp.clear();
-		if (port == 59000) {
-			mu2.lock();
-			this->m_kpL.clear();
-			mu2.unlock();
-		}
-		else if (port == 53000) {
+		vector<KeyPoint> veckp;
+		//if (port == 59000) {
+		//	mu2.lock();
+		//	this->m_kpL.clear();
+		//	mu2.unlock();
+		//}
+		//else if (port == 53000) {
 
-			mu.lock();
-			this->m_kpC.clear();
-			mu.unlock();
-		}
-		ZeroMemory(buf, 4);
+		//	mu.lock();
+		//	this->m_kpC.clear();
+		//	mu.unlock();
+		//}
+		//ZeroMemory((char*)&buffer, 4);
+		int kplen = this->kpLength;
+		/*for (int j = 0; j < kplen; j++) {
+			ZeroMemory(buf, 25000);
+			ZeroMemory((char*)&buffer, 4);
 
-		for (int j = 0; j < 1000; j++) {
 			for (int i = 0; i < 4; i += bytes)
 			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv failed");
 			kp.pt.x = buffer;
-
+			ZeroMemory((char*)&buffer,4);
 
 			for (int i = 0; i < 4; i += bytes)
 			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv2 failed");
 			kp.pt.y = buffer;
+			ZeroMemory((char*)&buffer, 4);
 
 			for (int i = 0; i < 4; i += bytes)
 			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv3 failed");
 			kp.size = buffer;
+
+			for (int i = 0; i < 4; i += bytes)
+			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv3 failed");
+			kp.angle = buffer;
+			ZeroMemory((char*)&buffer, 4);
+
+			for (int i = 0; i < 4; i += bytes)
+			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv3 failed");
+			kp.class_id = buffer;
+			ZeroMemory((char*)&buffer, 4);
+
+			for (int i = 0; i < 4; i += bytes)
+			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv3 failed");
+			kp.octave = buffer;
+			ZeroMemory((char*)&buffer, 4);
+
+
+			for (int i = 0; i < 4; i += bytes)
+			if ((bytes = recv(clientSocket, (char*)&buffer+i, 4-i, 0)) == -1) cout << ("recv3 failed");
+			kp.response = buffer;
+			ZeroMemory((char*)&buffer, 4);
+
 			veckp.push_back(kp);
+		}*/
+		//cout <<"KeyPoints: "<< veckp[0].pt.x << endl;
+
+		ZeroMemory(buf, sizeof(buf));
+		//for (int i = 0; i < len; i += bytes)
+		if ((bytes = recv(clientSocket,buf, sizeof(buf), 0)) == -1) cout << ("recv3 failed");
+		KeyPoint *p;
+
+		for (p = (KeyPoint*)&buf[0]; p <= (KeyPoint*)&buf[bytes-1]; p++) {
+			veckp.push_back(*p);
+			//*p++;
 		}
-
-
+		p=NULL;
 
 		if (bytes == SOCKET_ERROR)
 		{
@@ -334,14 +454,13 @@ void Stitching::getKeyPointsTCP(int port) {
 		}
 		if (port == 53000) {
 			this->m_kpC = veckp;
-			//mu.lock();
-			//drawKeypoints(this->imgCenter, this->m_kpC, this->imgCenter);
-			//mu.unlock();
-			//cv::imshow("Frame with Center-Keypoints", this->imgCenter);
-
-			//if (waitKey(1000 / 20) >= 0) {
-			//	break;
-			//}
+			imgK = this->imgCenter.clone();
+			drawKeypoints(imgK, this->m_kpC, imgK);
+			cv::imshow("Frame with Center-Keypoints", imgK);
+			if (waitKey(1000 / 20) >= 0) 
+			{
+				break;
+			}
 		}
 		else if (port == 59000) {
 			this->m_kpL = veckp;
@@ -386,7 +505,6 @@ void Stitching::getFrameTCP(int port,int imgNumber, String windowname) {
 		//Wait for client to send data
 		for (int i = 0; i < imgSize; i += bytes)
 			if ((bytes = recv(clientSocket, buf + i, imgSize - i, 0)) == -1) cout << ("recv failed");
-
 		int ptr = 0;
 		for (int i = 0; i < img.rows; i++) {
 			for (int j = 0; j < img.cols; j++) {
@@ -413,11 +531,9 @@ void Stitching::getFrameTCP(int port,int imgNumber, String windowname) {
 		//img =imdecode(buffer, IMREAD_COLOR);
 	//drawKeypoints(img, veckp, img);
 		if (port == 54000) {
-				mu.lock();
 				this->imgCenter = img.clone();
-				mu.unlock();
-				//namedWindow(windowname, WINDOW_FREERATIO);
-				//imshow(windowname, this->imgCenter);
+			//	namedWindow(windowname, WINDOW_FREERATIO);
+			//	imshow(windowname, this->imgCenter);
 
 			//if (waitKey(1000 / 10) >= 0) {
 			//	break;
@@ -872,6 +988,27 @@ vector<DMatch> Stitching::getSiftmatches(Mat &img1, Mat &img2, float a)
 
 	sift->detectAndCompute(img1, noArray(), kp1, siftdescriptor1);
 	sift->detectAndCompute(img2, noArray(), kp2, siftdescriptor2);
+	//cout << "reale Datei: " << kp1[0].pt.x << endl;
+	//cout <<"KP: "<< (char*)kp1.data() << endl;
+	//char *buf = (char*)kp1.data();
+	//KeyPoint *p = (KeyPoint*)buf;
+	//cout << "BUF: " << p->pt.x << endl;
+	//vector<KeyPoint> kpoints;
+
+	//for (int i = 0; i < kp1.size(); i++) {
+	//	kpoints.push_back(*p++);
+	//}
+	//cout <<"ENCODEE"<< kpoints[35].pt.x << endl;
+	//cout << "reale Datei: " << kp1[35].pt.x << endl;
+
+	//cout << "KPsize: " << kp1.max_size() << endl;
+	//KeyPoint *buffer;
+	//char *c = (char*)kp1.data();
+	//buffer = (KeyPoint*)c;
+
+	//KeyPoint *p = buffer;
+	//cout << "P: " << (p+1)->pt.x << endl;
+
 	vector<DescriptorMatcher> dsc;
 	Ptr<cv::DescriptorMatcher> matcher11;
 	matcher11 = BFMatcher::create(NORM_L2, false);
@@ -1713,10 +1850,28 @@ vector<DMatch> Stitching::getSureMatches(Mat imgCPU1, Mat imgCPU2, double a)
 	img2.upload(imgGray2);
 	surf(img1, cuda::GpuMat(), keypoints1GPU, descriptors1GPU);
 	surf(img2, cuda::GpuMat(), keypoints2GPU, descriptors2GPU);
+	vector<float> dsc;
+	surf.downloadDescriptors(descriptors1GPU, dsc);
+
+//	float *p = dsc.data();
+//	for (int i = 0; i < dsc.size(); i++) {
+//	cout << *p++ << endl;
+//	if (i == 20) {
+//		break;
+//
+//	}
+//}
+//	cout << "Richtiger Vektor" << endl;
+//	for (int i = 0; i < dsc.size(); i++) {
+//		cout << dsc[i] << endl;
+//		if (i == 20) {
+//			break;
+//		}
+//	}
 
 	//surf->detectWithDescriptors(img1, cuda::GpuMat(), keypoints1GPU, descriptors1GPU);
 	//surf->detectWithDescriptors(img2, cuda::GpuMat(), keypoints2GPU, descriptors2GPU);
-
+/*
 	Ptr<cv::cuda::DescriptorMatcher> matcher = cuda::DescriptorMatcher::createBFMatcher(surf.defaultNorm());
 	vector<DMatch> matches;
 	matcher->match(descriptors1GPU, descriptors2GPU, matches);
@@ -1735,7 +1890,7 @@ vector<DMatch> Stitching::getSureMatches(Mat imgCPU1, Mat imgCPU2, double a)
 		if (matchesknn[i][0].distance < a * matchesknn[i][1].distance) {
 			mt1.push_back(matchesknn[i][0]);
 		}
-	}
+	}*/
 	//drawMatches(Mat(img1), keypoints1, Mat(img2), keypoints2, mt1, img_matches);
 
 	//imwrite("seaman_result.jpg", img_matches);
@@ -1764,8 +1919,8 @@ vector<DMatch> Stitching::getSureMatches(Mat imgCPU1, Mat imgCPU2, double a)
 	}*/
 
 
-	setKeypoints(imgCPU1, keypoints1);
-	setKeypoints(imgCPU2, keypoints2);
+	//setKeypoints(imgCPU1, keypoints1);
+	//setKeypoints(imgCPU2, keypoints2);
 	return mt1;
 }
 
@@ -1781,17 +1936,7 @@ vector<DMatch> Stitching::getSurfMatches(Mat img1, Mat img2, double a, double b,
 	detector->detectAndCompute(imgGray1, noArray(), kp1, surfdescriptor1);
 	detector->detectAndCompute(imgGray2, noArray(), kp2, surfdescriptor2);
 
-	//cout << surfdescriptor1.elemSize()*surfdescriptor1.total() << endl;
-	//vector<uchar> buffer;
-	//imencode("A.exr ", surfdescriptor1, buffer);
-	//for (int i = 0; i < buffer.size(); i++)
-	//	cout << buffer[i] << endl;
-	//Mat new1;
-	//imdecode(buffer, -1,&new1);
-	//imshow("hall1", surfdescriptor1);
-
-	//imshow("hall", new1);
-	//waitKey(0);
+	
 
 
 	vector<DescriptorMatcher> dsc;

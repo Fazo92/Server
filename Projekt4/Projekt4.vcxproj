@@ -1,6 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="BasicCfg|Win32">
+      <Configuration>BasicCfg</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="BasicCfg|x64">
+      <Configuration>BasicCfg</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -32,6 +40,12 @@
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BasicCfg|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -40,6 +54,12 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BasicCfg|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
@@ -61,10 +81,17 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="PropertySheet.props" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BasicCfg|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="PropertySheet.props" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='BasicCfg|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -75,6 +102,10 @@
     <IncludePath>C:\dev\librealsense\include;C:\dev\opencv\build\install\include;C:\dev\librealsense\third-party\glfw\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\dev\opencv\build\install\x64\vc15\lib;C:\dev\opencv\build\install\x64\vc15\bin;C:\Program Files\librealsense2\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BasicCfg|x64'">
+    <IncludePath>C:\dev\librealsense\include;C:\dev\opencv\build\install\include;C:\dev\librealsense\third-party\glfw\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\dev\opencv\build\install\x64\vc15\lib;C:\dev\opencv\build\install\x64\vc15\bin;C:\Program Files\librealsense2\bin;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -82,7 +113,32 @@
       <SDLCheck>true</SDLCheck>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='BasicCfg|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\dev\librealsense\third-party\glfw\include;C:\dev\librealsense\third-party\imgui;C:\dev\librealsense\examples;C:\Program Files\librealsense2\include;C:\dev\opencv\build\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\dev\opencv\build\install\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_aruco430d.lib;opencv_bgsegm430d.lib;opencv_bioinspired430d.lib;opencv_calib3d430d.lib;opencv_ccalib430d.lib;opencv_core430d.lib;opencv_cudaarithm430d.lib;opencv_cudabgsegm430d.lib;opencv_cudacodec430d.lib;opencv_cudafeatures2d430d.lib;opencv_cudafilters430d.lib;opencv_cudaimgproc430d.lib;opencv_cudalegacy430d.lib;opencv_cudaobjdetect430d.lib;opencv_cudaoptflow430d.lib;opencv_cudastereo430d.lib;opencv_cudawarping430d.lib;opencv_cudev430d.lib;opencv_datasets430d.lib;opencv_dnn430d.lib;opencv_dnn_objdetect430d.lib;opencv_dnn_superres430d.lib;opencv_dpm430d.lib;opencv_face430d.lib;opencv_features2d430d.lib;opencv_flann430d.lib;opencv_fuzzy430d.lib;opencv_gapi430d.lib;opencv_hfs430d.lib;opencv_highgui430d.lib;opencv_imgcodecs430d.lib;opencv_imgproc430d.lib;opencv_img_hash430d.lib;opencv_intensity_transform430d.lib;opencv_line_descriptor430d.lib;opencv_mcc430d.lib;opencv_ml430d.lib;opencv_objdetect430d.lib;opencv_optflow430d.lib;opencv_phase_unwrapping430d.lib;opencv_photo430d.lib;opencv_plot430d.lib;opencv_quality430d.lib;opencv_rapid430d.lib;opencv_reg430d.lib;opencv_rgbd430d.lib;opencv_saliency430d.lib;opencv_shape430d.lib;opencv_stereo430d.lib;opencv_stitching430d.lib;opencv_structured_light430d.lib;opencv_superres430d.lib;opencv_surface_matching430d.lib;opencv_text430d.lib;opencv_tracking430d.lib;opencv_video430d.lib;opencv_videoio430d.lib;opencv_videostab430d.lib;opencv_xfeatures2d430d.lib;opencv_ximgproc430d.lib;opencv_xobjdetect430d.lib;opencv_xphoto430d.lib;C:\Program Files\librealsense2\lib\glfw3d.lib;C:\Program Files\librealsense2\lib\realsense2d.lib;C:\Program Files\librealsense2\lib\fwd.lib;C:\Program Files\librealsense2\lib\realsense2-gld.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <StackReserveSize>1000000000000</StackReserveSize>
+      <StackCommitSize>10000000</StackCommitSize>
+    </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='BasicCfg|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>

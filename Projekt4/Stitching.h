@@ -33,18 +33,20 @@ class Stitching {
 
 public:
 	server serv;
-	int kpLength;
+	uint kpLength=700;
 	int coldscCenter=64;
 	int coldscLeft = 64;
 
 	int rowdscCenter=300;
 	int rowdscLeft = 300;
-
+	void getCUDADimensions(int port);
 	void getDimensions(int port);
 	void getFrameTCP(int port,int imgNumber, String windowname);
 	void getKeyPointsTCP(int port);
 	void getDescriptorTCP(int port);
+	void getCudaDescriptorsTCP(int port);
 	void realTimeStitching();
+	int dscSize=1000;
 	Mat dscLeft, dscCenter;
 	Mat imgLeft, imgRight, imgCenter, imgBottom1, imgBottom2,hR,hL,hB1,hB2, warpLeft, warpRight, warpDown, warpDown2;
 	cuda::GpuMat imgLeftGPU, imgRightGPU, imgCenterGPU, imgBottom1GPU, imgBottom2GPU, warpLeftGPU, warpRightGPU, warpDownGPU, warpDown2GPU;
