@@ -35,70 +35,24 @@ using namespace rs2;
 
 class rsFeature {
 public:
-    Mat getcolorFrameRS(rs2::pipeline pipe);
-    rs2::pipeline setInfraredRS(int width, int height);
-    Mat getInfraredRS(rs2::pipeline pipe);
-    rs2::pipeline getColorFrameRSpipeline();
-    void getDistance();
-    void check_error(rs2_error* e)
-    {
-        if (e)
-        {
-            printf("rs_error was raised when calling %s(%s):\n", rs2_get_failed_function(e), rs2_get_failed_args(e));
-            printf("    %s\n", rs2_get_error_message(e));
-            exit(EXIT_FAILURE);
-        }
-    }
-    void detectObject(Mat& img, Mat depthImage);
-    Mat detecedObject;
-    Rect rct;
-    vector<Rect> rct_vec;
-    Mat getDepthFrame(rs2::pipeline pipe, rs2::colorizer color_map);
-    void RegionGrowth(Mat& src);
-    void sendCamFrame(int port);
-    void getWarpedImg(int port);
-    void getdepth_and_colorFrame(bool &isRunning, Mat& img1, Mat& depth_img, String deviceNumber);
-    Mat m_img,m_d_img, m_d_imgUp,pano_depth,pano_img,m_imgR, m_imgL, m_imgBL, m_imgBR, m_DimgR, m_DimgL, m_DimgBL, m_DimgBR;
-    Mat m_imgB, m_dimgB,d_img_Range;
-    Mutex mu_img_send, mu_imgR_send, mu_imgB_send,mu_d_img_Range;
-    Mutex mu_dimg, mu_dimgR, mu_dimgL, mu_dimgBR, mu_dimgBL;
-    void sichteinschränkungsdetektion(sock socket);
+    //Membervariablen
+    Mat m_img; //Membervariable für die Referenzkamera-> wird in void reference_cam(String deviceNumber) intialisert
+    Mat m_d_img; //Membervariable für das Tiefenbild der Referenzkamera -> wird in void reference_cam(String deviceNumber) intialisert
+    Mat m_pano; //Membervariable für die rekonstruierte Szene. Wird in der main in scene_reconstruction initialisiert
+    Mat m_imgR, m_imgL, m_imgBL, m_imgBR; //Membervariablen für die Hubmast- und Gabelzinkenkameras
+    Mat m_holo, m_holo_d; //Membervariablen für sichtfeldkamera rgb und das entsprechende Tiefenbild
+    Mutex mu_wR, mu_wL, mu_wBL, mu_wBR; //Mutexes für die Umgebungskameras, werden in recv_img() und scene_reconstruction() verwendet
+    Mutex mu_d_holo, mu_holo, mu_dimg; //Mutexes für Sichtfeldkameras sowie das entsprechende Tiefenbild, wird in der main und void holo_cam verwendet
+    Mutex mu_pano; //Mutex für die rekonstruierte Szene, da in der main in zwei verschiedenen Threads darauf zugegriffen wird: scene_reconstruction und sichteinschränkungskompensation 
+
+    //Methoden
+    void sichteinschränkungsdetektion(sock socket); 
     void reference_cam(String deviceNumber);
     void holo_cam(String deviceNumber);
-    float hindernisVal=0.;
-    bool hindernis=false;
     void recv_img(int port, string IP);
-    void recv_depth_img(int port, string IP);
     Mat getMatinRange(Mat depth_img, double minRange = 0.3, double maxRange = 1.5);
-    Mutex mu_wR, mu_wL, mu_wBL, mu_wBR,mu_d_holo;
-    Mat holo_img, holo_img_depth;
-    Mutex mu_holo,mu_pano_depth,mu_pano,mu_warped_pano;
-    cuda::GpuMat warped_pano_gpu;
-    Mat tmpH;
-private:
-    int width, height;
-    void grow(cv::Mat& src, cv::Mat& dest, cv::Mat& mask, cv::Point seed, int threshold);
 
-
-
-
-
-    // parameters
-    const int threshold = 200;
-    const uchar max_region_num = 100;
-    const double min_region_area_factor = 0.01;
-    const cv::Point PointShift2D[8] =
-    {
-        cv::Point(1, 0),
-        cv::Point(1, -1),
-        cv::Point(0, -1),
-        cv::Point(-1, -1),
-        cv::Point(-1, 0),
-        cv::Point(-1, 1),
-        cv::Point(0, 1),
-        cv::Point(1, 1)
-    };
-
+    //Funktion um RGB Bilder von Realsense in OpenCV Format zu überführen
     static cv::Mat frame_to_mat(const rs2::frame& f)
     {
         using namespace cv;
@@ -135,9 +89,11 @@ private:
         throw std::runtime_error("Frame format is not supported yet!");
     }
 
+
+    //Funktion um Tiefenbilder von Realsense in OpenCV Format zu überführen
     static cv::Mat depth_frame_to_meters(const rs2::depth_frame& f1)
     {
-        
+
         cv::Mat dm = frame_to_mat(f1);
         dm.convertTo(dm, CV_64F);
         //dm = dm * f1.get_units();

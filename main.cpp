@@ -25,7 +25,7 @@ void showImage(Mat img) {
 
 }
 
-void scene_reconstruction(rsFeature& rsf,Stitching &st) {
+void scene_reconstruction(rsFeature& rsf, Stitching& st) {
 	while (true) {
 
 		//if (rsf.m_img.empty()) cout << "center Image is empty" << endl;
@@ -34,7 +34,7 @@ void scene_reconstruction(rsFeature& rsf,Stitching &st) {
 		//if (rsf.m_imgBR.empty()) cout << "Bottom Left Image is empty" << endl;
 		//if (rsf.m_imgBL.empty()) cout << "Bottom Right Image is empty" << endl;
 
-		if (rsf.m_imgR.empty() || rsf.m_imgL.empty() || rsf.m_imgBR.empty()|| rsf.m_imgBL.empty()) continue;
+		if (rsf.m_imgR.empty() || rsf.m_imgL.empty() || rsf.m_imgBR.empty() || rsf.m_imgBL.empty()) continue;
 		//// Speichern der transformierten Bilder
 		rsf.mu_wR.lock();
 		Mat warpR = rsf.m_imgR.clone();
@@ -52,7 +52,7 @@ void scene_reconstruction(rsFeature& rsf,Stitching &st) {
 		rsf.mu_wBL.unlock();
 
 		//// Stitchen der Teilbilder mittels Alpha-Blending
-		Mat pano, pano2,pano3;
+		Mat pano, pano2, pano3;
 		thread tP1(&Stitching::AlphaBlendingGPU, warpR, warpL, ref(pano));
 		thread tP2(&Stitching::AlphaBlendingGPU, warpBL, warpBR, ref(pano2));
 		tP1.join();
@@ -62,53 +62,53 @@ void scene_reconstruction(rsFeature& rsf,Stitching &st) {
 
 		//// rekonstruierte Szene speichern
 		rsf.mu_pano.lock();
-		rsf.pano_img = pano3.clone();
+		rsf.m_pano = pano3.clone();
 		rsf.mu_pano.unlock();
 
 	}
 }
-void sichteinschränkungs_komp(rsFeature &rsf)
+void sichteinschränkungs_komp(rsFeature& rsf)
 {
 	///Wert für Ausblenden der Sichteinschränkungen. Je höher, desto stärker werden die Sichteinschränkungen ausgeblendet
 	float alpha = 0.7;
 
 	while (true)
 	{
-		if (rsf.holo_img.empty() || rsf.holo_img_depth.empty()|| rsf.pano_img.empty()) continue;
-		Mat sichtfeld, sichtfeld_depth,pano,pano_prev;
+		if (rsf.m_holo.empty() || rsf.m_holo_d.empty() || rsf.m_pano.empty()) continue;
+		Mat sichtfeld, sichtfeld_depth, pano, pano_prev;
 
 		//// rekonstruierte Szene mit und ohne eingeblendetem Sichtfeld speichern
 		rsf.mu_pano.lock();
-		pano = rsf.pano_img.clone();
-		pano_prev = rsf.pano_img.clone()(Rect(rsf.holo_img.cols / 2, rsf.holo_img.rows / 2, rsf.holo_img.cols, rsf.holo_img.rows));
+		pano = rsf.m_pano.clone();
+		pano_prev = rsf.m_pano.clone()(Rect(rsf.m_holo.cols / 2, rsf.m_holo.rows / 2, rsf.m_holo.cols, rsf.m_holo.rows));
 		rsf.mu_pano.unlock();
-		Mat roi(pano, Rect(rsf.holo_img.cols / 2, rsf.holo_img.rows / 2, rsf.holo_img.cols, rsf.holo_img.rows));
+		Mat roi(pano, Rect(rsf.m_holo.cols / 2, rsf.m_holo.rows / 2, rsf.m_holo.cols, rsf.m_holo.rows));
 		rsf.mu_holo.lock();
-		sichtfeld = rsf.holo_img.clone();
+		sichtfeld = rsf.m_holo.clone();
 		rsf.mu_holo.unlock();
 		sichtfeld.copyTo(roi);
 
 		////Tiefenbild der Sichtfeldkamera 
 		rsf.mu_d_holo.lock();
-		sichtfeld_depth = rsf.holo_img_depth.clone();
+		sichtfeld_depth = rsf.m_holo_d.clone();
 		rsf.mu_d_holo.unlock();
 
 		////Bereich von 0.28 bis 3 metern extrahieren. Wird im Anschluss als Maske verwendet
 		Mat mask = rsf.getMatinRange(sichtfeld_depth, 0.28, 3.);
 
 		/// Ausschnitt der rekonstruierten Szene in Bild speichern, um es anschließend zu verarbeiten
-		Mat croppedPano = pano(Rect(rsf.holo_img.cols / 2, rsf.holo_img.rows / 2, rsf.holo_img.cols, rsf.holo_img.rows));
+		Mat croppedPano = pano(Rect(rsf.m_holo.cols / 2, rsf.m_holo.rows / 2, rsf.m_holo.cols, rsf.m_holo.rows));
 
 		/// parallales verarbeiten der Pixel der rekonstruierten Szene
 		croppedPano.forEach<Pixel>(
-			[&sichtfeld, &pano_prev, &mask,&alpha](Pixel& pixel, const int* position)->void
+			[&sichtfeld, &pano_prev, &mask, &alpha](Pixel& pixel, const int* position)->void
 			{
 				// SichtfeldKamera =px_SF
 				Pixel px_SF = sichtfeld.ptr<Pixel>(position[0])[position[1]];
 				// Ausschnitt aus rekonstruierte Szene ohne Sichtfeld =px_pano
 				Pixel px_pano = pano_prev.ptr<Pixel>(position[0])[position[1]];
 				// Maske die vorher aus Tiefenbildern der Sichtfeldkamera gewonnen wurden
-				double val=mask.ptr<double>(position[0])[position[1]];
+				double val = mask.ptr<double>(position[0])[position[1]];
 				/// Wenn Pixelintensität ungleich Null ist, wird ein transparents Überlagern mit dem Wert alpha durchgeführt
 				if (val != 0.f) {
 					pixel.x = int(px_pano.x) * alpha + (int)px_SF.x * (1 - alpha);
@@ -131,22 +131,21 @@ void main() {
 	rsFeature rsf;
 
 
-	sock socket1, socket2,socket3,socket4,socketbool;
-	//st.streamRealSense();
+	sock socket1, socket2, socket3, socket4, socketbool;
 	//cuda::setDevice(0);
 	thread timg_C(&rsFeature::reference_cam, &rsf, "042222071631");
-	thread timg_Holo(&rsFeature::holo_cam,&rsf, "801312070973");
+	thread timg_Holo(&rsFeature::holo_cam, &rsf, "801312070973");
 	thread tcomputeHindernis(&rsFeature::sichteinschränkungsdetektion, &rsf, socketbool);
 	thread trcvImg0(&rsFeature::recv_img, &rsf, PORTRCVIMG, IPJETSON0);
-	thread trcvImg2(&rsFeature::recv_img, &rsf, PORTRCVIMG+2, IPJETSON2);
-	thread trcvImg3(&rsFeature::recv_img, &rsf, PORTRCVIMG+3, IPJETSON3);
-	thread trcvImg4(&rsFeature::recv_img, &rsf, PORTRCVIMG+4, IPJETSON4);
+	thread trcvImg2(&rsFeature::recv_img, &rsf, PORTRCVIMG + 2, IPJETSON2);
+	thread trcvImg3(&rsFeature::recv_img, &rsf, PORTRCVIMG + 3, IPJETSON3);
+	thread trcvImg4(&rsFeature::recv_img, &rsf, PORTRCVIMG + 4, IPJETSON4);
 
 	thread tstitch(scene_reconstruction, ref(rsf), ref(st));
 	thread tstitch2(sichteinschränkungs_komp, ref(rsf));
 
 	timg_C.join();
 
-	
+
 	return;
 }
